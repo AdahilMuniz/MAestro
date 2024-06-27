@@ -20,6 +20,7 @@
 #include <stdbool.h>
 
 static const unsigned PKT_SIZE = 13;	//!<Constant Service Header size, based on the structure ServiceHeader. If you change it, please change the same define within app_injector.h
+static const unsigned ECC_SIZE = 4;
 
 /**
  * @brief This structure is to be filled by the software when needed to send a 

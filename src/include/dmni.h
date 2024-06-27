@@ -16,6 +16,7 @@
 #include <stdbool.h>
 
 #include "packet.h"
+#include "ecc.h"
 
 /**
  * @brief Abstracts the DMNI programming for read data from NoC and copy to memory.
