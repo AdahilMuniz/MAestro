@@ -522,23 +522,105 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
 			// reason: it could get flipped by the time it reaches the consumer
 			// therefore, the consumer flag is enough to check ECC
 			// remember to put the ECC in the producer to avoid stalling the NoC
+			int double_data_aux [2];
 			int ecc[4];
+			uint8_t ecc_[ECC_SIZE*4];
+			ecc_error_t ecc_er[ECC_SIZE*4];
+			ecc_error_t ecc_final_er = NO_ERROR;
 			dmni_read(ecc, 4);
 
+			for (int i = 0; i < 4; i++){
+				ecc_[0 + i*4] = (uint8_t)(ecc[i] & 0x000000ff) >> 0;
+				ecc_[1 + i*4] = (uint8_t)(ecc[i] & 0x0000ff00) >> 8;
+				ecc_[2 + i*4] = (uint8_t)(ecc[i] & 0x00ff0000) >> 16;
+				ecc_[3 + i*4] = (uint8_t)(ecc[i] & 0xff000000) >> 24;
+
+				printf("ECC[%d] = %x \n", i, ecc[i]);
+			}
+			
+
 			size_t flit_cntr;
+			//OBS.: Returning a pointer is not good practice, you are returning a pointer to a memory
+			// space within the function heap, so, the caller can access it, but any other function
+			// that want to access it through pointer can't, it will generate an exception.
 			int *payload = ipipe_get_buf(ipipe, &flit_cntr);
 
 			/* Verificar ECC recebido contra 'pkt' e payload[flit_cntr] */
 			/* Nesse exemplo, preciso que o ecc seja 0, 1, 2, 3         */
 			/* Calcular ECC aqui!                                       */
+			double_data_aux[0] = pkt->service;
+			double_data_aux[1] = pkt->producer_task;
+			ecc_er[0] = ham_decode((uint32_t *)double_data_aux, ecc_[0], 64, 7);
+		
+			double_data_aux[0] = pkt->consumer_task;
+			double_data_aux[1] = pkt->source_PE;
+			ecc_er[1] = ham_decode((uint32_t *)double_data_aux, ecc_[1], 64, 7);
+		
+			double_data_aux[0] = pkt->timestamp;
+			double_data_aux[1] = pkt->transaction;
+			ecc_er[2] = ham_decode((uint32_t *)double_data_aux, ecc_[2], 64, 7);
+		
+			double_data_aux[0] = pkt->mapper_task;
+			double_data_aux[1] = pkt->waiting_msg;
+			ecc_er[3] = ham_decode((uint32_t *)double_data_aux, ecc_[3], 64, 7);
+		
+			double_data_aux[0] = pkt->code_size;
+			double_data_aux[1] = pkt->bss_size;
+			ecc_er[4] = ham_decode((uint32_t *)double_data_aux, ecc_[4], 64, 7);
+		
+			double_data_aux[0] = pkt->program_counter;
+			double_data_aux[1] = payload[0];
+			ecc_er[5] = ham_decode((uint32_t *)double_data_aux, ecc_[5], 64, 7);
+
+			for (int j = 1; j < flit_cntr; j=j+2){
+				if (j !=  flit_cntr-1){
+					// OBS.: As 'payload' points to a function heap, we can't pass it directly to the
+					// ham_decode, since it can't access it, so it was need to do this "intermediation"
+					// to avoid re-work.
+					double_data_aux[0] = payload [j];
+					double_data_aux[1] = payload [j+1];
+        			ecc_er[6+(j/2)] = ham_decode((uint32_t *)double_data_aux, ecc_[6+(j/2)], 64, 7);
+        		} else { //Last only one flit
+					double_data_aux[0] = payload [j];
+        			ecc_er[6+(j/2)] = ham_decode((uint32_t *)double_data_aux, ecc_[6+(j/2)], 32, 6);
+        		}
+			}
+
+			for (int i = 0; i < ECC_SIZE*4; i++){
+        		if (ecc_er[i] == DE){ // @NOTE: When a DE is found, the function returns since the pakcet will need to be resent.
+            		ecc_final_er = DE;
+        		    break;
+        		} else if (ecc_er[i] == SE){
+        		    ecc_final_er = SE;
+        		}
+    		}
+
+			if (ecc_final_er != NO_ERROR) {
+				if (ecc_final_er == DE){
+					puts("ERROR: Double Error found!");
+					//tl_t nack;
+					//tl_set(&nack, cons_task, MMR_NI_CONFIG);
+					//tl_send_nack(&nack, prod_task, prod_addr);
+					//return false;
+				}
+				else {
+					puts("WARN: Single Error found!");
+				}
+			}
+			
+
+			/*
 			printf("ECC computado: %x %x %x %x\n", 0, 1, 2, 3);
 			if (ecc[0] != 0 || ecc[1] != 1 || ecc[2] != 2 || ecc[3] != 3) {
 				puts("WARN: ECC computado != recebido!");
 				tl_t nack;
 				tl_set(&nack, cons_task, MMR_NI_CONFIG);
 				tl_send_nack(&nack, prod_task, prod_addr);
-				return false;
+				//return false;
+				//return true;
 			}
+			*/
+
 		}
 
 		/* If message originated from other task, send ACK 			  */

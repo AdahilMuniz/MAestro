@@ -20,6 +20,7 @@
 
 #include "task_control.h"
 #include "broadcast.h"
+#include "ecc.h"
 
 enum IRQ_FLAGS {
 	IRQ_PENDING_SERVICE = 0x01,
