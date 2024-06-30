@@ -546,7 +546,13 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
             //OBS.: Returning a pointer is not good practice, you are returning a pointer to a memory
             // space within the function heap, so, the caller can access it, but any other function
             // that want to access it through pointer can't, it will generate an exception.
-            int *payload = ipipe_get_buf(ipipe, &flit_cntr);
+            //int *payload = ipipe_get_buf(ipipe, &flit_cntr);
+            int *payload = (int*)((int)ipipe_get_buf(ipipe, &flit_cntr) | (int)tcb_get_offset(cons_tcb));
+
+            for (int i = 0; i < flit_cntr; i++){
+                printf("PAYLOAD[%d]: %x\n", i, payload[i]);
+            }
+            
 
             /* Verificar ECC recebido contra 'pkt' e payload[flit_cntr] */
             /* Nesse exemplo, preciso que o ecc seja 0, 1, 2, 3         */

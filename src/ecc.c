@@ -30,6 +30,10 @@ uint8_t ham_encode(uint32_t * data_in, uint8_t nb_databits, uint8_t nb_redbits){
     uint8_t flit = 0;
     uint8_t p = 0;
 
+    for (int i = 0; i < nb_databits/32; i++){
+        printf("DATA IN [%d]: %x\n", i, data_in[i]);
+    }
+    
     // Calculating Hamming
     for (uint8_t j = 0; j < nb_redbits; j++){ // Iterate over the reundancy bits
         for (uint8_t i = 1; i < nb_totalbits; i++){ // Iterate over the entire data (redudancy + data)
