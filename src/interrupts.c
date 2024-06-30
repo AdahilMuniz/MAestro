@@ -530,12 +530,15 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
             dmni_read(ecc, 4);
 
             for (int i = 0; i < 4; i++){
-                ecc_[0 + i*4] = (uint8_t)(ecc[i] & 0x000000ff) >> 0;
-                ecc_[1 + i*4] = (uint8_t)(ecc[i] & 0x0000ff00) >> 8;
-                ecc_[2 + i*4] = (uint8_t)(ecc[i] & 0x00ff0000) >> 16;
-                ecc_[3 + i*4] = (uint8_t)(ecc[i] & 0xff000000) >> 24;
+                ecc_[0 + i*4] = (uint8_t)((ecc[i] & 0x000000ff) >>  0);
+                ecc_[1 + i*4] = (uint8_t)((ecc[i] & 0x0000ff00) >>  8);
+                ecc_[2 + i*4] = (uint8_t)((ecc[i] & 0x00ff0000) >> 16);
+                ecc_[3 + i*4] = (uint8_t)((ecc[i] & 0xff000000) >> 24);
 
-                printf("ECC[%d] = %x \n", i, ecc[i]);
+                printf("ECC[%d] = %x \n", 0+4*i, ecc_[0+4*i]);
+                printf("ECC[%d] = %x \n", 1+4*i, ecc_[1+4*i]);
+                printf("ECC[%d] = %x \n", 2+4*i, ecc_[2+4*i]);
+                printf("ECC[%d] = %x \n", 3+4*i, ecc_[3+4*i]);
             }
             
 
@@ -549,8 +552,13 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
             /* Nesse exemplo, preciso que o ecc seja 0, 1, 2, 3         */
             /* Calcular ECC aqui!                                       */
             double_data_aux[0] = pkt->service;
-            double_data_aux[1] = pkt->producer_task;
+            double_data_aux[1] = pkt->producer_task;            
             ecc_er[0] = ham_decode((uint32_t *)double_data_aux, ecc_[0], 64, 7);
+
+            printf("PKT Service: %x\n", pkt->service);
+            printf("PKT Producer Task: %x\n", pkt->producer_task);
+            printf("DOUBLE DATA AUX 0: %x\n", double_data_aux[0]);
+            printf("DOUBLE DATA AUX 1: %x\n", double_data_aux[1]);
         
             double_data_aux[0] = pkt->consumer_task;
             double_data_aux[1] = pkt->source_PE;
@@ -574,8 +582,8 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
 
             for (int j = 1; j < flit_cntr; j=j+2){
                 if (j !=  flit_cntr-1){
-                    // OBS.: As 'payload' points to a function heap, we can't pass it directly to the
-                    // ham_decode, since it can't access it, so it was need to do this "intermediation"
+                    // OBS.: As 'payload' points to a function heap address, we can't pass it directly 
+                    // to the ham_decode, since it can't access it, so it was need to do this "intermediation"
                     // to avoid re-work.
                     double_data_aux[0] = payload [j];
                     double_data_aux[1] = payload [j+1];

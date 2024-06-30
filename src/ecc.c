@@ -32,7 +32,7 @@ uint8_t ham_encode(uint32_t * data_in, uint8_t nb_databits, uint8_t nb_redbits){
 
     // Calculating Hamming
     for (uint8_t j = 0; j < nb_redbits; j++){ // Iterate over the reundancy bits
-        for (uint8_t i = 1; i <= nb_totalbits; i++){ // Iterate over the entire data (redudancy + data)
+        for (uint8_t i = 1; i < nb_totalbits; i++){ // Iterate over the entire data (redudancy + data)
             if ( (i & (0b00000001 << j)) &&  (i & (~(0b00000001 << j))) ) { // Check if the referent redundancy bit is set and if it's power of two == it is a parity position
                 for (uint8_t k = 0; k < nb_redbits; k++) { // Iterate over the power of two, so we can covert the struct postion to data position 
                     if (i & (0b00000001 << k)){ // Check it already "passed" by a redundancy
@@ -40,6 +40,7 @@ uint8_t ham_encode(uint32_t * data_in, uint8_t nb_databits, uint8_t nb_redbits){
                     }
                 }
                 flit = (uint8_t) ((i-nb_found_redbits)/32);
+                //printf("FLIT: %d\n", flit);
                 partial_ecc ^= GET_D( ((i-nb_found_redbits)%32) , data_in[flit]);
             }
         }
@@ -85,6 +86,7 @@ ecc_error_t ham_decode(uint32_t * data, uint8_t ecc, uint8_t nb_databits, uint8_
     uint8_t position = 0;
 
     recalc_ecc = ham_encode(data, nb_databits, nb_redbits);
+    printf("RECALC ECC: %x\n", recalc_ecc);
 
     //OBS.: The parity calculated for recalc_ecc is not correct since it takes into account the just calculated ECC
     //not the previous one, so we have to calculate the correct parity

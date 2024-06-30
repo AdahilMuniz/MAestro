@@ -2,6 +2,7 @@
 #define  ECC_H
 
     #include <stdint.h>
+    #include <stdio.h>
 
     //Mask difines consider 32 bit data
     #define MASK_D1 0b10000000000000000000000000000000
