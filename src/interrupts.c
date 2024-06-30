@@ -534,11 +534,6 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
                 ecc_[1 + i*4] = (uint8_t)((ecc[i] & 0x0000ff00) >>  8);
                 ecc_[2 + i*4] = (uint8_t)((ecc[i] & 0x00ff0000) >> 16);
                 ecc_[3 + i*4] = (uint8_t)((ecc[i] & 0xff000000) >> 24);
-
-                printf("ECC[%d] = %x \n", 0+4*i, ecc_[0+4*i]);
-                printf("ECC[%d] = %x \n", 1+4*i, ecc_[1+4*i]);
-                printf("ECC[%d] = %x \n", 2+4*i, ecc_[2+4*i]);
-                printf("ECC[%d] = %x \n", 3+4*i, ecc_[3+4*i]);
             }
             
 
@@ -546,17 +541,10 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
             //OBS.: Returning a pointer is not good practice, you are returning a pointer to a memory
             // space within the function heap, so, the caller can access it, but any other function
             // that want to access it through pointer can't, it will generate an exception.
-            //int *payload = ipipe_get_buf(ipipe, &flit_cntr);
             int *payload = (int*)((int)ipipe_get_buf(ipipe, &flit_cntr) | (int)tcb_get_offset(cons_tcb));
 
-            for (int i = 0; i < flit_cntr; i++){
-                printf("PAYLOAD[%d]: %x\n", i, payload[i]);
-            }
-            
-
-            /* Verificar ECC recebido contra 'pkt' e payload[flit_cntr] */
-            /* Nesse exemplo, preciso que o ecc seja 0, 1, 2, 3         */
-            /* Calcular ECC aqui!                                       */
+            //OBS.: This is not the best way to do this. However, this was the best option considering
+            // the rework we would need to do.
             double_data_aux[0] = pkt->service;
             double_data_aux[1] = pkt->producer_task;            
             ecc_er[0] = ham_decode((uint32_t *)double_data_aux, ecc_[0], 64, 7);
@@ -631,19 +619,6 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
                     puts("WARN: Single Error found!");
                 }
             }
-            
-
-            /*
-            printf("ECC computado: %x %x %x %x\n", 0, 1, 2, 3);
-            if (ecc[0] != 0 || ecc[1] != 1 || ecc[2] != 2 || ecc[3] != 3) {
-                puts("WARN: ECC computado != recebido!");
-                tl_t nack;
-                tl_set(&nack, cons_task, MMR_NI_CONFIG);
-                tl_send_nack(&nack, prod_task, prod_addr);
-                //return false;
-                //return true;
-            }
-            */
 
         }
 

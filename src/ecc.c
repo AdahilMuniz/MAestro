@@ -29,10 +29,6 @@ uint8_t ham_encode(uint32_t * data_in, uint8_t nb_databits, uint8_t nb_redbits){
     uint8_t nb_found_redbits = 0;
     uint8_t flit = 0;
     uint8_t p = 0;
-
-    for (int i = 0; i < nb_databits/32; i++){
-        printf("DATA IN [%d]: %x\n", i, data_in[i]);
-    }
     
     // Calculating Hamming
     for (uint8_t j = 0; j < nb_redbits; j++){ // Iterate over the reundancy bits
@@ -90,7 +86,6 @@ ecc_error_t ham_decode(uint32_t * data, uint8_t ecc, uint8_t nb_databits, uint8_
     uint8_t position = 0;
 
     recalc_ecc = ham_encode(data, nb_databits, nb_redbits);
-    printf("RECALC ECC: %x\n", recalc_ecc);
 
     //OBS.: The parity calculated for recalc_ecc is not correct since it takes into account the just calculated ECC
     //not the previous one, so we have to calculate the correct parity

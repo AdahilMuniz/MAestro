@@ -122,11 +122,6 @@ void dmni_set_ecc(packet_t *packet, int *payload, size_t flit_cnt)
     double_data_aux[1] = packet->producer_task;
     ecc[0] = (uint8_t) ham_encode((uint32_t *)double_data_aux, 64, 7);
 
-    printf("PKT Service: %x\n", packet->service);
-    printf("PKT Producer Task: %x\n", packet->producer_task);
-    printf("DOUBLE DATA AUX 0: %x\n", double_data_aux[0]);
-    printf("DOUBLE DATA AUX 1: %x\n", double_data_aux[1]);
-
     double_data_aux[0] = packet->consumer_task;
     double_data_aux[1] = packet->source_PE;
     ecc[1] = (uint8_t) ham_encode((uint32_t *)double_data_aux, 64, 7);
@@ -147,9 +142,6 @@ void dmni_set_ecc(packet_t *packet, int *payload, size_t flit_cnt)
     double_data_aux[1] = payload[0];
     ecc[5] = (uint8_t) ham_encode((uint32_t *)double_data_aux, 64, 7);
 
-    printf("Payload Size= %d \n", payload_size);
-    printf("Flit CNT= %d \n", flit_cnt);
-
     for (int j = 1; j < flit_cnt; j=j+2){
         if (j !=  flit_cnt-1){
             // OBS.: As 'payload' points to a function heap address, we can't pass it directly 
@@ -168,12 +160,5 @@ void dmni_set_ecc(packet_t *packet, int *payload, size_t flit_cnt)
     payload[flit_cnt+1] = (int) (ecc[ 4] | (ecc[ 5] << 8) | (ecc[ 6] << 16) | (ecc[ 7] << 24) );
     payload[flit_cnt+2] = (int) (ecc[ 8] | (ecc[ 9] << 8) | (ecc[10] << 16) | (ecc[11] << 24) );
     payload[flit_cnt+3] = (int) (ecc[12] | (ecc[13] << 8) | (ecc[14] << 16) | (ecc[15] << 24) );
-
-    for (int i = 0; i < 4; i++){
-        printf("ECC[%d] = %x \n", 0+4*i, ecc[0+4*i]);
-        printf("ECC[%d] = %x \n", 1+4*i, ecc[1+4*i]);
-        printf("ECC[%d] = %x \n", 2+4*i, ecc[2+4*i]);
-        printf("ECC[%d] = %x \n", 3+4*i, ecc[3+4*i]);
-    }
     
 }
