@@ -560,31 +560,38 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
             double_data_aux[0] = pkt->service;
             double_data_aux[1] = pkt->producer_task;            
             ecc_er[0] = ham_decode((uint32_t *)double_data_aux, ecc_[0], 64, 7);
-
-            printf("PKT Service: %x\n", pkt->service);
-            printf("PKT Producer Task: %x\n", pkt->producer_task);
-            printf("DOUBLE DATA AUX 0: %x\n", double_data_aux[0]);
-            printf("DOUBLE DATA AUX 1: %x\n", double_data_aux[1]);
+            pkt->service = double_data_aux[0];
+            pkt->producer_task = double_data_aux[1];
         
             double_data_aux[0] = pkt->consumer_task;
             double_data_aux[1] = pkt->source_PE;
             ecc_er[1] = ham_decode((uint32_t *)double_data_aux, ecc_[1], 64, 7);
+            pkt->consumer_task = double_data_aux[0];
+            pkt->source_PE = double_data_aux[1];
         
             double_data_aux[0] = pkt->timestamp;
             double_data_aux[1] = pkt->transaction;
             ecc_er[2] = ham_decode((uint32_t *)double_data_aux, ecc_[2], 64, 7);
+            pkt->timestamp = double_data_aux[0];
+            pkt->transaction = double_data_aux[1];
         
             double_data_aux[0] = pkt->mapper_task;
             double_data_aux[1] = pkt->waiting_msg;
             ecc_er[3] = ham_decode((uint32_t *)double_data_aux, ecc_[3], 64, 7);
+            pkt->mapper_task = double_data_aux[0];
+            pkt->waiting_msg = double_data_aux[1];
         
             double_data_aux[0] = pkt->code_size;
             double_data_aux[1] = pkt->bss_size;
             ecc_er[4] = ham_decode((uint32_t *)double_data_aux, ecc_[4], 64, 7);
+            pkt->code_size = double_data_aux[0];
+            pkt->bss_size = double_data_aux[1];
         
             double_data_aux[0] = pkt->program_counter;
             double_data_aux[1] = payload[0];
             ecc_er[5] = ham_decode((uint32_t *)double_data_aux, ecc_[5], 64, 7);
+            pkt->program_counter = double_data_aux[0];
+            payload[0] = double_data_aux[1];
 
             for (int j = 1; j < flit_cntr; j=j+2){
                 if (j !=  flit_cntr-1){
@@ -594,9 +601,12 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
                     double_data_aux[0] = payload [j];
                     double_data_aux[1] = payload [j+1];
                     ecc_er[6+(j/2)] = ham_decode((uint32_t *)double_data_aux, ecc_[6+(j/2)], 64, 7);
+                    payload [j] = double_data_aux[0];
+                    payload [j+1] = double_data_aux[1];
                 } else { //Last only one flit
                     double_data_aux[0] = payload [j];
                     ecc_er[6+(j/2)] = ham_decode((uint32_t *)double_data_aux, ecc_[6+(j/2)], 32, 6);
+                    payload [j] = double_data_aux[0];
                 }
             }
 
@@ -612,10 +622,10 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
             if (ecc_final_er != NO_ERROR) {
                 if (ecc_final_er == DE){
                     puts("ERROR: Double Error found!");
-                    //tl_t nack;
-                    //tl_set(&nack, cons_task, MMR_NI_CONFIG);
-                    //tl_send_nack(&nack, prod_task, prod_addr);
-                    //return false;
+                    tl_t nack;
+                    tl_set(&nack, cons_task, MMR_NI_CONFIG);
+                    tl_send_nack(&nack, prod_task, prod_addr);
+                    return false;
                 }
                 else {
                     puts("WARN: Single Error found!");
