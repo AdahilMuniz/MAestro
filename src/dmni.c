@@ -108,8 +108,6 @@ void dmni_set_ecc(packet_t *packet, int *payload, size_t flit_cnt)
     /* Disparando um re-envio 						      */
 
     /* ATENÇÃO: ignorar packet[0] e packet[1] (TARGET e SIZE) */
-
-    size_t payload_size = flit_cnt - (PKT_SIZE + ECC_SIZE);
     int double_data_aux [2];
     uint8_t ecc [ECC_SIZE*4];
 
